@@ -1,6 +1,8 @@
-# 📋⚡ clip2path
+# 📋⚡ claude-code-clip2path
 
-> :rocket: **Blazingly safe** clipboard handling for Kitty terminal warriors
+> :rocket: **Blazingly safe** clipboard handling for Claude Code CLI and Kitty terminal warriors
+
+> :warning: **Disclaimer**: This project is not affiliated with Anthropic or Claude Code CLI. It's a community tool inspired by Claude Code's clipboard functionality.
 
 [![Made with Bash](https://img.shields.io/badge/Made%20with-Bash-1f425f.svg)](https://www.gnu.org/software/bash/)
 [![Powered by Kitty](https://img.shields.io/badge/Powered%20by-Kitty-ff6b35.svg)](https://sw.kovidgoyal.net/kitty/)
@@ -19,6 +21,16 @@
 - :warning: **Malicious payloads?** → Blocked by Kitty's advanced filtering
 - :globe_with_meridians: **URLs?** → Auto-quoted when pasted at shell prompts
 
+## :pray: Credits & Inspiration
+
+This tool is built upon the brilliant initial concept by **[@SamDc73](https://github.com/SamDc73)** who provided the [original script and idea](https://github.com/anthropics/claude-code/issues/834#issuecomment-2906989283) for clipboard handling in Kitty terminals. We've enhanced it with:
+
+- :shield: **Enhanced security** via `socket-only` remote control
+- :gear: **Hybrid approach** leveraging Kitty's built-in paste safety  
+- :sparkles: **Polish and documentation** for the community
+
+Huge thanks to SamDc73 for pioneering this approach! :clap:
+
 ## :rocket: Features That Will Blow Your Mind
 
 - **:zap: Blazing Performance**: Near-zero latency clipboard detection
@@ -34,12 +46,12 @@
 
 ```bash
 # Place the script anywhere you like (doesn't need to be in kitty config)
-curl -o ~/bin/clip2path https://raw.githubusercontent.com/your-repo/clip2path/main/clip2path
+curl -o ~/bin/clip2path https://raw.githubusercontent.com/your-repo/claude-code-clip2path/main/clip2path
 chmod +x ~/bin/clip2path
 
 # Or clone and symlink
-git clone https://github.com/your-repo/clip2path.git
-ln -s $(pwd)/clip2path/clip2path ~/bin/clip2path
+git clone https://github.com/your-repo/claude-code-clip2path.git
+ln -s $(pwd)/claude-code-clip2path/clip2path ~/bin/clip2path
 ```
 
 ### Step 2: Kitty Configuration
