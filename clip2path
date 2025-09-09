@@ -1,0 +1,208 @@
+#!/usr/bin/env bash
+# clip2path — robust Wayland clipboard → Kitty text/path injector
+# - Text in clipboard ⇒ paste text (no trailing newline).
+# - File(s) copied (text/uri-list) ⇒ paste local path(s), properly shell-quoted.
+# - Image in clipboard ⇒ save to a unique temp file and paste its quoted path.
+#
+# Requirements: kitty (Wayland), wl-clipboard (wl-paste). Kitty mapping must use
+# `--allow-remote-control` so KITTY_LISTEN_ON is set for this process.
+#
+# Optional env:
+#   CLIP2PATH_TMPDIR   : directory for saved images (default: $TMPDIR or /tmp)
+#   CLIP2PATH_DEBUG=1  : emit debug info to stderr
+
+set -Eeuo pipefail
+IFS=$'\n\t'
+umask 077
+export LC_ALL=C
+
+# ----- utilities -------------------------------------------------------------
+
+debug() { [[ "${CLIP2PATH_DEBUG:-0}" == "1" ]] && printf '[clip2path] %s\n' "$*" >&2 || true; }
+
+die() {
+  printf 'clip2path: %s\n' "$*" >&2
+  exit 1
+}
+
+have() { command -v "$1" >/dev/null 2>&1; }
+
+# Use Kitty's per-launch control socket if available (set by --allow-remote-control).
+kitty_send_text() {
+  if [[ -n "${KITTY_LISTEN_ON:-}" ]]; then
+    kitty @ --to "$KITTY_LISTEN_ON" send-text --stdin
+  else
+    # Fallback: try default target (less secure; avoid if possible).
+    kitty @ send-text --stdin
+  fi
+}
+
+# POSIX shell-quoting: wrap in single quotes and escape any embedded single quotes.
+# Result is safe for bash, zsh, dash, etc.
+sh_quote() {
+  local s=$1
+  # Replace each ' with '"'"'
+  printf "'%s'" "${s//\'/\'\"\'\"\'}"
+}
+
+# Minimal URI percent-decoder (for file:// URIs). Converts %XX and + to space.
+urldecode() {
+  local s=${1//+/ } out
+  # Turn %XX into \xXX for printf %b. Non-hex sequences will cause printf to warn;
+  # we guard by only converting valid %HH patterns.
+  s="$(printf '%s' "$s" | sed -E 's/%([0-9a-fA-F]{2})/\\x\1/g')"
+  printf '%b' "$s"
+}
+
+# Convert a text/uri-list payload into a single, space-separated, shell-quoted list of local paths.
+# Spec allows comments (#...) and blank lines; ignore non-file URIs.
+uri_list_to_quoted_paths() {
+  local line path paths=()
+  while IFS= read -r line; do
+    [[ -z "$line" || "${line:0:1}" == "#" ]] && continue
+    case "$line" in
+      # file://localhost/path or file:///path or file:/path (rare)
+      file://localhost/*) path="${line#file://localhost}";;
+      file:///*)          path="${line#file://}";;
+      file:/*)            path="${line#file:}";;
+      *)                  continue;;  # skip non-file URIs
+    esac
+    # Decode percent-encoding
+    path="$(urldecode "$path")"
+    # Normalize to absolute path
+    [[ "$path" != /* ]] && continue
+    paths+=("$(sh_quote "$path")")
+  done
+  ((${#paths[@]})) && printf '%s' "${paths[*]}"
+}
+
+# Choose best image MIME type: prefer image/png if present, else first image/*
+pick_image_mime() {
+  local types=$1
+  local mime
+  mime="$(printf '%s\n' "$types" | awk '/^image\/png([;]|$)/{print; exit}')"
+  [[ -z "$mime" ]] && mime="$(printf '%s\n' "$types" | awk '/^image\//{print; exit}')"
+  printf '%s' "$mime"
+}
+
+# Derive a sane lowercase extension from a MIME type. Fallback to "bin".
+ext_from_mime() {
+  local mime=$1 main=${mime%%/*} rest=${mime#*/}
+  local base=${rest%%;*}
+  base=${base,,}
+  case "$mime" in
+    image/jpeg|image/jpg) printf 'jpg';;
+    image/tiff)           printf 'tif';;
+    image/svg+xml)        printf 'svg';;
+    *)                    printf '%s' "${base//[^a-z0-9]/}";;
+  esac
+  [[ -z "$base" ]] && printf 'bin'
+}
+
+# Create a unique path for saved image in TMPDIR (does not rely on non-portable mktemp suffix flags)
+unique_image_path() {
+  local ext=$1
+  local tdir=${CLIP2PATH_TMPDIR:-${TMPDIR:-/tmp}}
+  [[ -d "$tdir" && -w "$tdir" ]] || die "temp dir not writable: $tdir"
+  local tmp
+  tmp="$(mktemp -p "$tdir" clip2path_XXXXXX)" || die "mktemp failed"
+  local file="${tmp}.${ext}"
+  mv "$tmp" "$file" || die "failed to reserve temp file"
+  printf '%s' "$file"
+}
+
+# Read the Wayland clipboard types once.
+list_types() {
+  wl-paste --list-types 2>/dev/null || true
+}
+
+# Paste plaintext (no trailing newline).
+paste_text() {
+  # Prefer explicit text/plain if offered; otherwise wl-paste will choose a text target.
+  local types=$1
+  if grep -Eq '^text/plain([;]|$)' <<<"$types"; then
+    wl-paste --type text/plain --no-newline | kitty_send_text
+  else
+    wl-paste --no-newline | kitty_send_text
+  fi
+}
+
+# Handle text/uri-list → paths
+paste_uri_list_as_paths() {
+  local payload
+  payload="$(wl-paste --type text/uri-list 2>/dev/null || true)"
+  if [[ -z "$payload" ]]; then
+    # Some apps only expose text/uri-list under "text/*"; try generic read and hope it contains URIs.
+    payload="$(wl-paste 2>/dev/null || true)"
+  fi
+  local quoted
+  quoted="$(printf '%s\n' "$payload" | uri_list_to_quoted_paths || true)"
+  if [[ -n "$quoted" ]]; then
+    printf '%s' "$quoted" | kitty_send_text
+    return 0
+  fi
+  return 1
+}
+
+# Save image target to file and paste quoted path.
+save_image_and_paste_path() {
+  local types=$1 mime ext file
+  mime="$(pick_image_mime "$types")"
+  [[ -z "$mime" ]] && return 1
+  ext="$(ext_from_mime "$mime")"
+  [[ -z "$ext" ]] && ext="bin"
+  file="$(unique_image_path "$ext")"
+  debug "saving image as $file (mime=$mime)"
+  # Use the specific MIME type to avoid implicit conversions.
+  if ! wl-paste --type "$mime" >"$file"; then
+    rm -f -- "$file"
+    return 1
+  fi
+  sh_quote "$file" | kitty_send_text
+}
+
+# ----- preflight -------------------------------------------------------------
+
+have wl-paste || die "missing dependency: wl-clipboard (wl-paste)"
+have kitty     || die "missing dependency: kitty"
+[[ -n "${WAYLAND_DISPLAY:-}" ]] || die "Wayland not detected (WAYLAND_DISPLAY not set)"
+
+# If launched via Kitty mapping with --allow-remote-control, KITTY_LISTEN_ON will be set.
+if [[ -z "${KITTY_LISTEN_ON:-}" ]]; then
+  debug "KITTY_LISTEN_ON not set; falling back to default kitty @ (consider using --allow-remote-control)"
+fi
+
+# ----- main ------------------------------------------------------------------
+
+types="$(list_types)"
+debug "clipboard types: $(printf '%q' "$types")"
+
+# Priority:
+# 1) text/uri-list (file manager copies)
+# 2) any text/*
+# 3) image/*
+# 4) fallback: treat as text
+if grep -Eq '^text/uri-list([;]|$)' <<<"$types"; then
+  if paste_uri_list_as_paths; then
+    exit 0
+  fi
+  # If URI processing failed, fall back to normal text paste.
+  debug "uri-list present but parsing failed; falling back to text"
+  paste_text "$types"
+  exit 0
+fi
+
+if grep -Eq '^text/' <<<"$types"; then
+  paste_text "$types"
+  exit 0
+fi
+
+if grep -Eq '^image/' <<<"$types"; then
+  if save_image_and_paste_path "$types"; then
+    exit 0
+  fi
+  debug "image save failed; falling back to text"
+fi
+
+# Last resort: paste whatever wl-paste yields as text, without newline.
+wl-paste --no-newline 2>/dev/null | kitty_send_text || true
