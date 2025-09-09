@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-# clip2path — robust Wayland clipboard → Kitty text/path injector
-# - Text in clipboard ⇒ paste text (no trailing newline).
-# - File(s) copied (text/uri-list) ⇒ paste local path(s), properly shell-quoted.
+# clip2path — robust Wayland clipboard → Kitty image path injector
 # - Image in clipboard ⇒ save to a unique temp file and paste its quoted path.
 #
 # Requirements: kitty (Wayland), wl-clipboard (wl-paste). Kitty mapping must use
@@ -54,27 +52,6 @@ urldecode() {
   printf '%b' "$s"
 }
 
-# Convert a text/uri-list payload into a single, space-separated, shell-quoted list of local paths.
-# Spec allows comments (#...) and blank lines; ignore non-file URIs.
-uri_list_to_quoted_paths() {
-  local line path paths=()
-  while IFS= read -r line; do
-    [[ -z "$line" || "${line:0:1}" == "#" ]] && continue
-    case "$line" in
-      # file://localhost/path or file:///path or file:/path (rare)
-      file://localhost/*) path="${line#file://localhost}";;
-      file:///*)          path="${line#file://}";;
-      file:/*)            path="${line#file:}";;
-      *)                  continue;;  # skip non-file URIs
-    esac
-    # Decode percent-encoding
-    path="$(urldecode "$path")"
-    # Normalize to absolute path
-    [[ "$path" != /* ]] && continue
-    paths+=("$(sh_quote "$path")")
-  done
-  ((${#paths[@]})) && printf '%s' "${paths[*]}"
-}
 
 # Choose best image MIME type: prefer image/png if present, else first image/*
 pick_image_mime() {
@@ -116,34 +93,6 @@ list_types() {
   wl-paste --list-types 2>/dev/null || true
 }
 
-# Paste plaintext (no trailing newline).
-paste_text() {
-  # Prefer explicit text/plain if offered; otherwise wl-paste will choose a text target.
-  local types=$1
-  if grep -Eq '^text/plain([;]|$)' <<<"$types"; then
-    wl-paste --type text/plain --no-newline | kitty_send_text
-  else
-    wl-paste --no-newline | kitty_send_text
-  fi
-}
-
-# Handle text/uri-list → paths
-paste_uri_list_as_paths() {
-  local payload
-  payload="$(wl-paste --type text/uri-list 2>/dev/null || true)"
-  if [[ -z "$payload" ]]; then
-    # Some apps only expose text/uri-list under "text/*"; try generic read and hope it contains URIs.
-    payload="$(wl-paste 2>/dev/null || true)"
-  fi
-  local quoted
-  quoted="$(printf '%s\n' "$payload" | uri_list_to_quoted_paths || true)"
-  if [[ -n "$quoted" ]]; then
-    printf '%s' "$quoted" | kitty_send_text
-    return 0
-  fi
-  return 1
-}
-
 # Save image target to file and paste quoted path.
 save_image_and_paste_path() {
   local types=$1 mime ext file
@@ -167,6 +116,9 @@ have wl-paste || die "missing dependency: wl-clipboard (wl-paste)"
 have kitty     || die "missing dependency: kitty"
 [[ -n "${WAYLAND_DISPLAY:-}" ]] || die "Wayland not detected (WAYLAND_DISPLAY not set)"
 
+# Check if running within Claude Code CLI (disabled)
+# [[ "${CLAUDECODE:-0}" == "1" ]] || die "clip2path: only works within Claude Code CLI terminal sessions"
+
 # If launched via Kitty mapping with --allow-remote-control, KITTY_LISTEN_ON will be set.
 if [[ -z "${KITTY_LISTEN_ON:-}" ]]; then
   debug "KITTY_LISTEN_ON not set; falling back to default kitty @ (consider using --allow-remote-control)"
@@ -177,32 +129,13 @@ fi
 types="$(list_types)"
 debug "clipboard types: $(printf '%q' "$types")"
 
-# Priority:
-# 1) text/uri-list (file manager copies)
-# 2) any text/*
-# 3) image/*
-# 4) fallback: treat as text
-if grep -Eq '^text/uri-list([;]|$)' <<<"$types"; then
-  if paste_uri_list_as_paths; then
-    exit 0
-  fi
-  # If URI processing failed, fall back to normal text paste.
-  debug "uri-list present but parsing failed; falling back to text"
-  paste_text "$types"
-  exit 0
-fi
-
-if grep -Eq '^text/' <<<"$types"; then
-  paste_text "$types"
-  exit 0
-fi
-
+# Only handle images
 if grep -Eq '^image/' <<<"$types"; then
   if save_image_and_paste_path "$types"; then
     exit 0
   fi
-  debug "image save failed; falling back to text"
+  debug "image save failed"
+  die "failed to save image from clipboard"
+else
+  die "no image found in clipboard"
 fi
-
-# Last resort: paste whatever wl-paste yields as text, without newline.
-wl-paste --no-newline 2>/dev/null | kitty_send_text || true
