@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-# clip2path — robust Wayland clipboard → Kitty hybrid paste handler
+# clip2path — robust Wayland/X11 clipboard → Kitty hybrid paste handler
 # - Text in clipboard ⇒ use kitty's paste-from-clipboard (with safety features)
 # - Image in clipboard ⇒ save to a unique temp file and paste its quoted path.
 #
-# Requirements: kitty (Wayland), wl-clipboard (wl-paste). Kitty mapping must use
-# `--allow-remote-control` so KITTY_LISTEN_ON is set for this process.
+# Requirements: kitty, and either:
+#   - Wayland: wl-clipboard (wl-paste)
+#   - X11: xclip or xsel
+# Kitty mapping must use `--allow-remote-control` so KITTY_LISTEN_ON is set.
 #
 # Optional env:
 #   CLIP2PATH_TMPDIR   : directory for saved images (default: $TMPDIR or /tmp)
@@ -25,6 +27,28 @@ die() {
 }
 
 have() { command -v "$1" >/dev/null 2>&1; }
+
+# Detect display server environment
+detect_display_server() {
+  if [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
+    echo "wayland"
+  elif [[ -n "${DISPLAY:-}" ]]; then
+    echo "x11"
+  else
+    echo "unknown"
+  fi
+}
+
+# Choose preferred X11 clipboard tool (prefer xclip over xsel)
+choose_x11_tool() {
+  if have xclip; then
+    echo "xclip"
+  elif have xsel; then
+    echo "xsel"
+  else
+    echo "none"
+  fi
+}
 
 # Use Kitty's per-launch control socket if available (set by --allow-remote-control).
 kitty_send_text() {
@@ -89,33 +113,101 @@ unique_image_path() {
   printf '%s' "$file"
 }
 
-# Read the Wayland clipboard types once.
-list_types() {
+# Read the clipboard types (Wayland)
+list_types_wayland() {
   wl-paste --list-types 2>/dev/null || true
+}
+
+# Read the clipboard types (X11)
+list_types_x11() {
+  local tool=$(choose_x11_tool)
+  case "$tool" in
+    xclip) xclip -selection clipboard -t TARGETS -o 2>/dev/null || true;;
+    xsel)  # xsel doesn't have direct TARGETS support, try common types
+           local types=()
+           xsel --clipboard --output >/dev/null 2>&1 && types+=("text/plain")
+           # Check for images by trying to get image data
+           if xclip -selection clipboard -t image/png -o >/dev/null 2>&1; then
+             types+=("image/png")
+           fi
+           printf '%s\n' "${types[@]}";;
+    *)     echo "";;
+  esac
+}
+
+# Read the clipboard types (unified interface)
+list_types() {
+  local display_server=$(detect_display_server)
+  case "$display_server" in
+    wayland) list_types_wayland;;
+    x11)     list_types_x11;;
+    *)       echo "";;
+  esac
+}
+
+# Save image from Wayland clipboard
+save_image_wayland() {
+  local mime=$1 file=$2
+  wl-paste --type "$mime" >"$file"
+}
+
+# Save image from X11 clipboard  
+save_image_x11() {
+  local mime=$1 file=$2
+  local tool=$(choose_x11_tool)
+  case "$tool" in
+    xclip) xclip -selection clipboard -t "$mime" -o >"$file";;
+    xsel)  # xsel doesn't support MIME types directly, try generic
+           xsel --clipboard --output >"$file";;
+    *)     return 1;;
+  esac
 }
 
 # Save image target to file and paste quoted path.
 save_image_and_paste_path() {
-  local types=$1 mime ext file
+  local types=$1 mime ext file display_server
   mime="$(pick_image_mime "$types")"
   [[ -z "$mime" ]] && return 1
   ext="$(ext_from_mime "$mime")"
   [[ -z "$ext" ]] && ext="bin"
   file="$(unique_image_path "$ext")"
   debug "saving image as $file (mime=$mime)"
-  # Use the specific MIME type to avoid implicit conversions.
-  if ! wl-paste --type "$mime" >"$file"; then
+  
+  display_server=$(detect_display_server)
+  case "$display_server" in
+    wayland) save_image_wayland "$mime" "$file";;
+    x11)     save_image_x11 "$mime" "$file";;
+    *)       return 1;;
+  esac
+  
+  if [[ $? -ne 0 ]]; then
     rm -f -- "$file"
     return 1
   fi
+  
   sh_quote "$file" | kitty_send_text
 }
 
 # ----- preflight -------------------------------------------------------------
 
-have wl-paste || die "missing dependency: wl-clipboard (wl-paste)"
-have kitty     || die "missing dependency: kitty"
-[[ -n "${WAYLAND_DISPLAY:-}" ]] || die "Wayland not detected (WAYLAND_DISPLAY not set)"
+have kitty || die "missing dependency: kitty"
+
+# Check display server and required clipboard tools
+display_server=$(detect_display_server)
+case "$display_server" in
+  wayland)
+    have wl-paste || die "missing dependency: wl-clipboard (wl-paste) for Wayland"
+    debug "detected Wayland environment"
+    ;;
+  x11)
+    x11_tool=$(choose_x11_tool)
+    [[ "$x11_tool" != "none" ]] || die "missing dependency: xclip or xsel for X11"
+    debug "detected X11 environment using $x11_tool"
+    ;;
+  *)
+    die "unsupported display server: neither WAYLAND_DISPLAY nor DISPLAY is set"
+    ;;
+esac
 
 # Check if running within Claude Code CLI (disabled)
 # [[ "${CLAUDECODE:-0}" == "1" ]] || die "clip2path: only works within Claude Code CLI terminal sessions"

@@ -11,7 +11,7 @@
 
 ## 🔥 What is this sorcery?
 
-**clip2path** is a :zap: **lightning-fast** hybrid clipboard injector designed to paste images seamlessly into **Claude Code CLI** and other terminal applications. It brings your clipboard content directly into your Kitty terminal with **enterprise-grade safety** and **zero configuration**.
+**claude-code-kitty-paste** is a :zap: **lightning-fast** hybrid clipboard injector designed to paste images seamlessly into **Claude Code CLI** and other terminal applications. It works on both **Wayland** and **X11** environments, bringing your clipboard content directly into your Kitty terminal with **enterprise-grade safety** and **zero configuration**.
 
 ### :sparkles: **The Magic**
 
@@ -45,7 +45,7 @@ Special thanks to the entire community for collaborating on this solution! :clap
 - **:shield: Fort Knox Security**: Leverages Kitty's enterprise clipboard safety
 - **:framed_picture: Smart Image Handling**: PNG, JPEG, SVG → instant file paths
 - **:gear: Zero Configuration**: Works out of the box with Kitty remote control
-- **:ocean: Wayland Native**: Built for the future of Linux desktop
+- **:ocean: Cross-Platform**: Native support for both Wayland and X11 environments
 - **:crystal_ball: Intelligent Detection**: Knows exactly what's in your clipboard
 
 ## :fire: Installation
@@ -78,7 +78,7 @@ map ctrl+v launch --type=background --allow-remote-control --keep-focus ~/bin/cl
 
 ## :zap: Usage
 
-**It just works.** Copy anything, hit `Ctrl+V`, and watch the magic happen:
+**It just works.** The script auto-detects your environment (Wayland/X11) and uses the appropriate clipboard tool. Copy anything, hit `Ctrl+V`, and watch the magic happen:
 
 ### :framed_picture: Images
 ```bash
@@ -120,34 +120,36 @@ export CLIP2PATH_DEBUG=1
 ## :construction_worker: Requirements
 
 - **Kitty Terminal** (with `allow_remote_control socket-only`)
-- **Wayland** (because we live in 2024)
-- **wl-clipboard** (`wl-paste`)
+- **Display Server**: Wayland or X11
+- **Clipboard Tools**:
+  - **Wayland**: `wl-clipboard` (`wl-paste`)
+  - **X11**: `xclip` or `xsel` (prefers xclip)
 - **Bash** 4.0+ (script runtime only - your shell can be zsh, fish, etc.)
 
 ## :computer: Compatibility
 
-| Feature | Support | Notes |
-|---------|---------|-------|
-| :framed_picture: PNG Images | :white_check_mark: | Perfect quality preservation |
-| :framed_picture: JPEG Images | :white_check_mark: | Maintains original compression |
-| :framed_picture: SVG Images | :white_check_mark: | Vector graphics ready |
-| :memo: Plain Text | :white_check_mark: | With Kitty safety features |
-| :link: URLs | :white_check_mark: | Auto-quoted at shell prompts |
-| :file_folder: File Lists | :construction: | Coming soon™ |
+| Feature | Wayland | X11 | Notes |
+|---------|---------|-----|-------|
+| :framed_picture: PNG Images | :white_check_mark: | :white_check_mark: | Perfect quality preservation |
+| :framed_picture: JPEG Images | :white_check_mark: | :white_check_mark: | Maintains original compression |
+| :framed_picture: SVG Images | :white_check_mark: | :white_check_mark: | Vector graphics ready |
+| :memo: Plain Text | :white_check_mark: | :white_check_mark: | With Kitty safety features |
+| :link: URLs | :white_check_mark: | :white_check_mark: | Auto-quoted at shell prompts |
+| :file_folder: File Lists | :construction: | :construction: | Coming soon™ |
 
 ## :building_construction: Architecture
 
 ```
-┌─────────────────┐    ┌──────────────┐    ┌─────────────────┐
-│   Clipboard     │───▶│  clip2path   │───▶│  Kitty Terminal │
-│   (Wayland)     │    │   (Hybrid)   │    │   (Secure)      │
-└─────────────────┘    └──────────────┘    └─────────────────┘
-         │                      │                      │
-    ┌────▼────┐          ┌─────▼─────┐          ┌─────▼─────┐
-    │ Images  │          │   Route   │          │   Paste   │
-    │ Text    │          │  & Save   │          │  & Filter │
-    │ URLs    │          │           │          │           │
-    └─────────┘          └───────────┘          └───────────┘
+┌─────────────────────┐    ┌──────────────┐    ┌─────────────────┐
+│     Clipboard       │───▶│  clip2path   │───▶│  Kitty Terminal │
+│  (Wayland/X11)     │    │   (Hybrid)   │    │   (Secure)      │
+└─────────────────────┘    └──────────────┘    └─────────────────┘
+            │                      │                      │
+       ┌────▼────┐          ┌─────▼─────┐          ┌─────▼─────┐
+       │ wl-paste │          │   Route   │          │   Paste   │
+       │   xclip   │          │  & Save   │          │  & Filter │
+       │   xsel    │          │ Images   │          │   Text    │
+       └─────────┘          └───────────┘          └───────────┘
 ```
 
 ## :handshake: Contributing
