@@ -30,21 +30,31 @@
 
 ## :fire: Installation
 
-### The One-Liner That Changes Everything
+### Step 1: Script Setup
 
 ```bash
-# Place the script in your Kitty config
-chmod +x ~/.config/kitty/clip2path
+# Place the script anywhere you like (doesn't need to be in kitty config)
+curl -o ~/bin/clip2path https://raw.githubusercontent.com/your-repo/clip2path/main/clip2path
+chmod +x ~/bin/clip2path
+
+# Or clone and symlink
+git clone https://github.com/your-repo/clip2path.git
+ln -s $(pwd)/clip2path/clip2path ~/bin/clip2path
 ```
 
-### Kitty Configuration
+### Step 2: Kitty Configuration
 
-Add this **game-changing** line to your `kitty.conf`:
+Add these **game-changing** lines to your `kitty.conf`:
 
 ```conf
-# :rocket: The future of clipboard handling
-map ctrl+v launch --type=background --allow-remote-control --keep-focus ~/.config/kitty/clip2path
+# :shield: Enable socket-only remote control (SECURE!)
+allow_remote_control socket-only
+
+# :rocket: The future of clipboard handling  
+map ctrl+v launch --type=background --allow-remote-control --keep-focus ~/bin/clip2path
 ```
+
+> :warning: **Security Note**: We use `socket-only` instead of `yes` for maximum security!
 
 ## :zap: Usage
 
@@ -89,7 +99,7 @@ export CLIP2PATH_DEBUG=1
 
 ## :construction_worker: Requirements
 
-- **Kitty Terminal** (with `allow_remote_control`)
+- **Kitty Terminal** (with `allow_remote_control socket-only`)
 - **Wayland** (because we live in 2024)
 - **wl-clipboard** (`wl-paste`)
 - **Bash** 4.0+ (for the advanced parameter expansion magic)
