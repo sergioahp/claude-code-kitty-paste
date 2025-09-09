@@ -23,12 +23,13 @@
 
 ## :pray: Credits & Inspiration
 
-This tool is built upon the community solutions from [GitHub Issue #834](https://github.com/anthropics/claude-code/issues/834) in the Claude Code repository:
+This tool is built upon the community solutions from [GitHub Issue #834](https://github.com/anthropics/claude-code/issues/834) and related community contributions:
 
-- **[@SamDc73](https://github.com/SamDc73)** - :bulb: Original Linux/Wayland/Kitty script implementation
+- **[@SamDc73](https://github.com/SamDc73)** - :bulb: Original Linux/Wayland/Kitty script implementation (May 2025)
 - **[@lockmeister](https://github.com/lockmeister)** - :point_up: Original issue reporter who identified the clipboard challenge
 - **[@Noitidart](https://github.com/Noitidart)** - :apple: macOS workaround solution
 - **[@Stewart86](https://github.com/Stewart86)** - :desktop_computer: Terminal compatibility insights
+- **[Shukebeta Blog Author](https://blog.shukebeta.com/)** - :memo: Independent [Linux terminal solution](https://blog.shukebeta.com/2025/07/11/quick-fix-claude-code-image-paste-in-linux-terminal/) and documentation (July 2025)
 
 We've enhanced the original concept with:
 
@@ -154,10 +155,11 @@ export CLIP2PATH_DEBUG=1
 We welcome contributions that make this tool even more :fire: **blazingly awesome**!
 
 ### :pray: Hall of Fame
-- **[@SamDc73](https://github.com/SamDc73)** - :bulb: Original Linux/Wayland/Kitty script implementation
+- **[@SamDc73](https://github.com/SamDc73)** - :bulb: Original Linux/Wayland/Kitty script implementation (May 2025)
 - **[@lockmeister](https://github.com/lockmeister)** - :point_up: Identified the clipboard pasting challenge  
 - **[@Noitidart](https://github.com/Noitidart)** - :apple: macOS workaround pioneer
 - **[@Stewart86](https://github.com/Stewart86)** - :desktop_computer: Terminal compatibility expert
+- **[Shukebeta Blog Author](https://blog.shukebeta.com/)** - :memo: Independent documentation and solution (July 2025)
 - **[Claude (Anthropic)](https://claude.ai)** - :robot: Code enhancement, security improvements, and documentation
 - Clipboard safety pioneers
 - Wayland evangelists  
