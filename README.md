@@ -102,7 +102,7 @@ export CLIP2PATH_DEBUG=1
 - **Kitty Terminal** (with `allow_remote_control socket-only`)
 - **Wayland** (because we live in 2024)
 - **wl-clipboard** (`wl-paste`)
-- **Bash** 4.0+ (for the advanced parameter expansion magic)
+- **Bash** 4.0+ (script runtime only - your shell can be zsh, fish, etc.)
 
 ## :computer: Compatibility
 
