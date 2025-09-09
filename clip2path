@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# clip2path — robust Wayland clipboard → Kitty image path injector
+# clip2path — robust Wayland clipboard → Kitty hybrid paste handler
+# - Text in clipboard ⇒ use kitty's paste-from-clipboard (with safety features)
 # - Image in clipboard ⇒ save to a unique temp file and paste its quoted path.
 #
 # Requirements: kitty (Wayland), wl-clipboard (wl-paste). Kitty mapping must use
@@ -129,13 +130,20 @@ fi
 types="$(list_types)"
 debug "clipboard types: $(printf '%q' "$types")"
 
-# Only handle images
+# Hybrid approach: images → file paths, text → kitty paste
 if grep -Eq '^image/' <<<"$types"; then
+  debug "found image in clipboard, saving to file"
   if save_image_and_paste_path "$types"; then
     exit 0
   fi
   debug "image save failed"
   die "failed to save image from clipboard"
 else
-  die "no image found in clipboard"
+  debug "no image found, delegating to kitty for text paste"
+  # Let kitty handle text with its safety features
+  if [[ -n "${KITTY_LISTEN_ON:-}" ]]; then
+    kitty @ --to "$KITTY_LISTEN_ON" action paste_from_clipboard
+  else
+    kitty @ action paste_from_clipboard
+  fi
 fi
