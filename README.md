@@ -23,13 +23,20 @@
 
 ## :pray: Credits & Inspiration
 
-This tool is built upon the brilliant initial concept by **[@SamDc73](https://github.com/SamDc73)** who provided the [original script and idea](https://github.com/anthropics/claude-code/issues/834#issuecomment-2906989283) for clipboard handling in Kitty terminals. We've enhanced it with:
+This tool is built upon the community solutions from [GitHub Issue #834](https://github.com/anthropics/claude-code/issues/834) in the Claude Code repository:
+
+- **[@SamDc73](https://github.com/SamDc73)** - :bulb: Original Linux/Wayland/Kitty script implementation
+- **[@lockmeister](https://github.com/lockmeister)** - :point_up: Original issue reporter who identified the clipboard challenge
+- **[@Noitidart](https://github.com/Noitidart)** - :apple: macOS workaround solution
+- **[@Stewart86](https://github.com/Stewart86)** - :desktop_computer: Terminal compatibility insights
+
+We've enhanced the original concept with:
 
 - :shield: **Enhanced security** via `socket-only` remote control
 - :gear: **Hybrid approach** leveraging Kitty's built-in paste safety  
 - :sparkles: **Polish and documentation** for the community
 
-Huge thanks to SamDc73 for pioneering this approach! :clap:
+Special thanks to the entire community for collaborating on this solution! :clap:
 
 ## :rocket: Features That Will Blow Your Mind
 
@@ -147,7 +154,10 @@ export CLIP2PATH_DEBUG=1
 We welcome contributions that make this tool even more :fire: **blazingly awesome**!
 
 ### :pray: Hall of Fame
-- **[@SamDc73](https://github.com/SamDc73)** - :bulb: Original idea and initial script implementation
+- **[@SamDc73](https://github.com/SamDc73)** - :bulb: Original Linux/Wayland/Kitty script implementation
+- **[@lockmeister](https://github.com/lockmeister)** - :point_up: Identified the clipboard pasting challenge  
+- **[@Noitidart](https://github.com/Noitidart)** - :apple: macOS workaround pioneer
+- **[@Stewart86](https://github.com/Stewart86)** - :desktop_computer: Terminal compatibility expert
 - **[Claude (Anthropic)](https://claude.ai)** - :robot: Code enhancement, security improvements, and documentation
 - Clipboard safety pioneers
 - Wayland evangelists  
