@@ -11,7 +11,9 @@
 
 ## 🔥 What is this sorcery?
 
-**claude-code-kitty-paste** is a :zap: **lightning-fast** hybrid clipboard injector designed to paste images seamlessly into **Claude Code CLI** and other terminal applications. It works on both **Wayland** and **X11** environments, bringing your clipboard content directly into your Kitty terminal with **enterprise-grade safety** and **zero configuration**.
+**claude-code-kitty-paste** is a :zap: **lightning-fast** hybrid clipboard injector designed to paste images seamlessly into **Claude Code CLI** on **Linux systems**. It works on both **Wayland** and **X11** environments, bringing your clipboard content directly into your Kitty terminal with **enterprise-grade safety** and **zero configuration**.
+
+> :information_source: **macOS users**: You don't need this script! macOS terminals already have built-in image paste support. Just use `Cmd+Ctrl+Shift+4` for screenshots and `Ctrl+V` (not `Cmd+V`) to paste images into Claude Code CLI.
 
 ### :sparkles: **The Magic**
 
@@ -27,8 +29,7 @@ This tool is built upon the community solutions from [GitHub Issue #834](https:/
 
 - **[@SamDc73](https://github.com/SamDc73)** - :bulb: Original Linux/Wayland/Kitty script implementation (May 2025)
 - **[@lockmeister](https://github.com/lockmeister)** - :point_up: Original issue reporter who identified the clipboard challenge
-- **[@Noitidart](https://github.com/Noitidart)** - :apple: macOS workaround solution
-- **[@Stewart86](https://github.com/Stewart86)** - :desktop_computer: Terminal compatibility insights
+- **[@Stewart86](https://github.com/Stewart86)** - :desktop_computer: Terminal compatibility insights  
 - **[Shukebeta Blog Author](https://blog.shukebeta.com/)** - :memo: Independent [Linux terminal solution](https://blog.shukebeta.com/2025/07/11/quick-fix-claude-code-image-paste-in-linux-terminal/) and documentation (July 2025)
 
 We've enhanced the original concept with:
@@ -158,8 +159,7 @@ We welcome contributions that make this tool even more :fire: **blazingly awesom
 
 ### :pray: Hall of Fame
 - **[@SamDc73](https://github.com/SamDc73)** - :bulb: Original Linux/Wayland/Kitty script implementation (May 2025)
-- **[@lockmeister](https://github.com/lockmeister)** - :point_up: Identified the clipboard pasting challenge  
-- **[@Noitidart](https://github.com/Noitidart)** - :apple: macOS workaround pioneer
+- **[@lockmeister](https://github.com/lockmeister)** - :point_up: Identified the Linux clipboard pasting challenge  
 - **[@Stewart86](https://github.com/Stewart86)** - :desktop_computer: Terminal compatibility expert
 - **[Shukebeta Blog Author](https://blog.shukebeta.com/)** - :memo: Independent documentation and solution (July 2025)
 - **[Claude (Anthropic)](https://claude.ai)** - :robot: Code enhancement, security improvements, and documentation
