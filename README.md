@@ -1,4 +1,4 @@
-# 📋⚡ claude-code-clip2path
+# 📋⚡ claude-code-kitty-paste
 
 > :rocket: **Blazingly safe** clipboard handling for Claude Code CLI and Kitty terminal warriors
 
@@ -46,12 +46,12 @@ Huge thanks to SamDc73 for pioneering this approach! :clap:
 
 ```bash
 # Place the script anywhere you like (doesn't need to be in kitty config)
-curl -o ~/bin/clip2path https://raw.githubusercontent.com/your-repo/claude-code-clip2path/main/clip2path
+curl -o ~/bin/clip2path https://raw.githubusercontent.com/your-repo/claude-code-kitty-paste/main/clip2path
 chmod +x ~/bin/clip2path
 
 # Or clone and symlink
-git clone https://github.com/your-repo/claude-code-clip2path.git
-ln -s $(pwd)/claude-code-clip2path/clip2path ~/bin/clip2path
+git clone https://github.com/your-repo/claude-code-kitty-paste.git
+ln -s $(pwd)/claude-code-kitty-paste/clip2path ~/bin/clip2path
 ```
 
 ### Step 2: Kitty Configuration
