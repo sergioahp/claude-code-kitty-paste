@@ -83,12 +83,15 @@ map ctrl+v launch --type=background --allow-remote-control --keep-focus ~/bin/cl
 
 ### :framed_picture: Images
 ```bash
-# Screenshot copied → Instant file path
+# Screenshot copied → Instant file path pasted
 /tmp/clip2path_Ac3X9k.png
 
-# Ready to use in any command
-eog '/tmp/clip2path_Ac3X9k.png'
+# Claude Code CLI automatically detects and loads the image
+# You'll see [Image #1] appear in your text entry box
+# Now Claude can analyze, discuss, or help with the image!
 ```
+
+> :magic_wand: **Claude Code Magic**: Once the image path is pasted, it displays as `[Image #1]` in your text input. Claude can read the image when asked or when the intention is clear - perfect for analyzing screenshots, explaining code in images, or getting help with visual content!
 
 ### :memo: Text & URLs
 ```bash
@@ -97,6 +100,11 @@ echo "Hello, World!"
 
 # URLs → Auto-quoted at shell prompts
 'https://github.com/your-amazing-repo'
+
+# Text pasting uses Kitty's built-in safety features
+# - Control code filtering prevents malicious payloads
+# - Large paste warnings for 16KB+ content
+# - URL auto-quoting at shell prompts
 ```
 
 ## :gear: Advanced Configuration
