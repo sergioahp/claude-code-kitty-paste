@@ -147,6 +147,8 @@ export CLIP2PATH_DEBUG=1
 We welcome contributions that make this tool even more :fire: **blazingly awesome**!
 
 ### :pray: Hall of Fame
+- **[@SamDc73](https://github.com/SamDc73)** - :bulb: Original idea and initial script implementation
+- **[Claude (Anthropic)](https://claude.ai)** - :robot: Code enhancement, security improvements, and documentation
 - Clipboard safety pioneers
 - Wayland evangelists  
 - Terminal productivity maximalists
