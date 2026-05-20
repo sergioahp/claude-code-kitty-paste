@@ -1,5 +1,7 @@
 # 📋⚡ claude-code-kitty-paste
 
+> :no_entry: **No longer needed**: Claude Code CLI now supports pasting images natively. This repo is archived/obsolete — you can paste images directly with `Ctrl+V` without any external script. Keeping it around for historical reference.
+
 > :rocket: **Blazingly safe** clipboard handling for Claude Code CLI and Kitty terminal warriors
 
 > :warning: **Disclaimer**: This project is not affiliated with Anthropic or Claude Code CLI. It's a community tool inspired by Claude Code's clipboard functionality.
